@@ -1,30 +1,25 @@
 import { useState } from 'react';
+import { postWorkout } from '../redux/features/workoutSlice';
+import { useDispatch, useSelector } from 'react-redux';
 
 const WorkoutForm = () => {
+  const dispatch = useDispatch();
+  const workoutError = useSelector((state) => state.workout.error);
+
   const [title, setTitle] = useState('');
   const [load, setLoad] = useState('');
   const [reps, setReps] = useState('');
-  const [error, setError] = useState('');
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
-    const workout = { title, load, reps };
-    const res = await fetch('http://localhost:4000/api/workouts', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(workout),
-    });
-    const data = await res.json();
-
-    if (!res.ok) {
-      setError(data.error);
-    }
-    if (res.ok) {
-      setError(null);
-      setTitle('');
-      setLoad('');
-      setReps('');
-    }
+    dispatch(postWorkout({ title, load: Number(load), reps: Number(reps) }))
+      .unwrap()
+      .then(() => {
+        setTitle('');
+        setLoad('');
+        setReps('');
+      })
+      .catch((err) => console.error('Failed to post workout: ', err));
   };
 
   return (
@@ -49,7 +44,7 @@ const WorkoutForm = () => {
         value={reps}
       />
       <button>Add Workout</button>
-      {error && <p className='error'>{error}</p>}
+      {workoutError && <div className='error'>{workoutError}</div>}
     </form>
   );
 };
